@@ -3,8 +3,6 @@ import { Outlet, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useEffect, useState } from 'react'
 
-type AuthTab = 'password' | 'otp'
-
 export default function App() {
   const [user, setUser] = useState<any>(null)
 
@@ -40,29 +38,11 @@ export default function App() {
 }
 
 function AuthPanel() {
-  const [tab, setTab] = useState<AuthTab>('password')
   return (
     <div className="card">
       <h2>Sign in</h2>
-      <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={() => setTab('password')}
-          className={tab==='password' ? 'bg-sky-500' : ''}
-        >
-          Email + Password
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('otp')}
-          className={tab==='otp' ? 'bg-sky-500' : ''}
-        >
-          Email OTP
-        </button>
-      </div>
-
       <div className="mt-4">
-        {tab === 'password' ? <EmailPasswordForm /> : <EmailOtpForm />}
+        <EmailPasswordForm />
       </div>
     </div>
   )
@@ -84,7 +64,7 @@ function EmailPasswordForm() {
       } else {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) alert(error.message)
-        else alert('Check your email to confirm the account (if confirmations are enabled).')
+        else alert('Account created. You can sign in now.')
       }
     } finally { setBusy(false) }
   }
@@ -106,63 +86,5 @@ function EmailPasswordForm() {
         </button>
       </div>
     </form>
-  )
-}
-
-function EmailOtpForm() {
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [sent, setSent] = useState(false)
-  const [busy, setBusy] = useState(false)
-
-  const sendOtp = async (e:any) => {
-    e.preventDefault()
-    setBusy(true)
-    try {
-      // שולח קוד אימות למייל (לא לינק)
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: true }  // יוצר משתמש אם אינו קיים
-      })
-      if (error) alert(error.message)
-      else setSent(true)
-    } finally { setBusy(false) }
-  }
-
-  const verifyOtp = async (e:any) => {
-    e.preventDefault()
-    setBusy(true)
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: code,
-        type: 'email'  // סוג OTP עבור אימייל
-      })
-      if (error) alert(error.message)
-    } finally { setBusy(false) }
-  }
-
-  return (
-    <div className="space-y-3">
-      {!sent ? (
-        <form onSubmit={sendOtp} className="space-y-3">
-          <div>
-            <label>Email</label>
-            <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} />
-          </div>
-          <button disabled={busy} type="submit">Send code</button>
-          <small>We’ll email you a 6-digit code.</small>
-        </form>
-      ) : (
-        <form onSubmit={verifyOtp} className="space-y-3">
-          <div>
-            <label>Enter code from email</label>
-            <input inputMode="numeric" pattern="[0-9]*" required value={code} onChange={e=>setCode(e.target.value)} />
-          </div>
-          <button disabled={busy} type="submit">Verify & Sign in</button>
-          <button type="button" onClick={()=>setSent(false)}>Resend / Change email</button>
-        </form>
-      )}
-    </div>
   )
 }
