@@ -2,6 +2,8 @@
 import { Outlet, Link } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { useEffect, useState } from 'react'
+import { TripProvider, useTrip } from './context/TripContext'
+import GroupsPanel from './components/Groups'
 
 export default function App() {
   const [user, setUser] = useState<any>(null)
@@ -17,23 +19,31 @@ export default function App() {
   const signOut = async () => { await supabase.auth.signOut() }
 
   return (
-    <div>
-      <div className="container">
-        <header className="flex items-center justify-between mb-4">
-          <h1>Trip Manager</h1>
-          {user ? <button onClick={signOut}>Sign out</button> : null}
-        </header>
+    <TripProvider>
+      <div>
+        <div className="container">
+          <header className="flex items-center justify-between mb-4">
+            <h1>Trip Manager</h1>
+            <div className="flex items-center gap-3">
+              {user ? (
+                <>
+                  <GroupsPanel />
+                  <button onClick={signOut}>Sign out</button>
+                </>
+              ) : null}
+            </div>
+          </header>
 
-        {!user ? <AuthPanel /> : <Outlet />}
+          {!user ? <AuthPanel /> : <Outlet />}
+        </div>
+
+        <nav className="tabbar">
+          <Link to="/">Home</Link>
+          <Link to="/expenses">Expenses</Link>
+          <Link to="/itinerary">Itinerary</Link>
+        </nav>
       </div>
-
-      <nav className="tabbar">
-        <Link to="/">Home</Link>
-        <Link to="/expenses">Expenses</Link>
-        <Link to="/itinerary">Itinerary</Link>
-        <Link to="/links">Links</Link>
-      </nav>
-    </div>
+    </TripProvider>
   )
 }
 
